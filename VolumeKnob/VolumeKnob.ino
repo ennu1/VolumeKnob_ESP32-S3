@@ -1,6 +1,7 @@
 #include <Arduino_GFX_Library.h>
 #include <SD.h>
 #include <FS.h>
+#include <Wire.h>
 #include "touch.h"
 #include "imgs.h"
 #include "Nunito_Bold56pt.h"
@@ -96,19 +97,19 @@ void draw()
   sprite.unloadFont();
 
   sprite.setTextColor(grays[3]);
-  sprite.loadFont(NotoSansBold15);
+  sprite.loadFont(&NotoSansBold15);
   sprite.drawString("VOLUME",120,86);
   sprite.unloadFont();
 
   if(mute)
   {
     sprite.setTextColor(grays[7]);
-    sprite.loadFont(middleFont);
+    sprite.loadFont(&middleFont);
     sprite.drawString("MUTE",120,210);
     sprite.unloadFont();
   }
 
-  sprite.loadFont(fatFont);
+  sprite.loadFont(&fatFont);
   sprite.setTextColor(grays[5]);
   sprite.drawString("%",120,164,4);
   sprite.unloadFont();
