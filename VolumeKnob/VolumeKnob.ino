@@ -89,7 +89,7 @@ void draw()
   sprite.setTextDatum(4);
 
   sprite.setTextColor(grays[0]);
-  sprite.loadFont(&Nunito_Bold56pt7b);
+  sprite.loadFont(Nunito_Bold56pt7bBitmaps);
   if(angle*2<10)
     sprite.drawString("0"+String(angle*2),120,126);
   else
@@ -97,19 +97,19 @@ void draw()
   sprite.unloadFont();
 
   sprite.setTextColor(grays[3]);
-  sprite.loadFont(&NotoSansBold15);
+  sprite.loadFont(NotoSansBold15);
   sprite.drawString("VOLUME",120,86);
   sprite.unloadFont();
 
   if(mute)
   {
     sprite.setTextColor(grays[7]);
-    sprite.loadFont(&middleFont);
+    sprite.loadFont(middleFont);
     sprite.drawString("MUTE",120,210);
     sprite.unloadFont();
   }
 
-  sprite.loadFont(&fatFont);
+  sprite.loadFont(fatFont);
   sprite.setTextColor(grays[5]);
   sprite.drawString("%",120,164,4);
   sprite.unloadFont();
