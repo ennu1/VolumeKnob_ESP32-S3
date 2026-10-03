@@ -5,6 +5,7 @@
 #include "touch.h"
 #include "imgs.h"
 #include "NotoSansBold15.h"
+#include "NunitoBold.h"
 #include "largestFont.h"
 #include "fatFont.h"
 #include "middleFont.h"
@@ -41,15 +42,21 @@ int chosen=0;
 unsigned short color_start[6]={0x01AA,TFT_PURPLE,0xAFB8,TFT_ORANGE,0x7800,0x632C};
 unsigned short color_end[6]={0xAEDE,TFT_PINK,0x0345,TFT_YELLOW,TFT_WHITE,0xF79E};
 
-int angle=19;
+int angle=6;  // Changed to 6 (12% on startup)
 int xt = 0, yt = 0;
 int xs=120;
 int ys=12;
 bool mute=0;
 int deb=0;
+unsigned long lastTouchTime = 0;
+bool doubleTapDetected = false;
 Arduino_ESP32SPI *bus = new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, TFT_MISO, HSPI, true); // Constructor
 Arduino_GFX *gfx = new Arduino_GC9A01(bus, TFT_RES, 0 /* rotation */, true /* IPS */);
 bool first=1;
+
+#define BUTTON_PIN 8  // Add button pin for mute
+int buttonState = HIGH;
+int lastButtonState = HIGH;
 
 void setup(void)
 {
@@ -68,6 +75,8 @@ void setup(void)
      Keyboard.begin();
      USB.begin();
     
+     pinMode(BUTTON_PIN, INPUT_PULLUP);
+    
       int co=220;
      for(int i=0;i<13;i++)
      {
@@ -76,7 +85,7 @@ void setup(void)
      }
      draw();
 
- 
+  
 }
 
 void draw()
@@ -85,7 +94,7 @@ sprite.fillSprite(TFT_BLACK);
 sprite.setTextDatum(4);
 
 sprite.setTextColor(grays[0]);
-sprite.loadFont(largestFont);
+sprite.loadFont(NunitoBold);
 if(angle*2<10)
 sprite.drawString("0"+String(angle*2),120,126);
 else
@@ -161,14 +170,14 @@ void readEncoder()
   if (pos != newPos) {
     
     if(newPos>pos && angle<50)
-    {angle++;
+    {angle+=2;  // Changed to increment by 2 instead of 1
      Keyboard.press(KEY_LEFT_CTRL);
      Keyboard.press(KEY_LEFT_SHIFT);
      Keyboard.press('8');
      Keyboard.releaseAll();
     }
     if(newPos<pos && angle>0)
-    {angle--;
+    {angle-=2;  // Changed to decrement by 2 instead of 1
     Keyboard.press(KEY_LEFT_CTRL);
      Keyboard.press(KEY_LEFT_SHIFT);
      Keyboard.press('9');
@@ -205,7 +214,7 @@ void setColor()
 
 void resetVOL()
 {
-   angle=19;
+   angle=6;  // Changed to 6 (12%)
    Keyboard.press(KEY_LEFT_CTRL);
    Keyboard.press(KEY_LEFT_SHIFT);
    Keyboard.press('0');
@@ -213,20 +222,63 @@ void resetVOL()
    draw();
 }
 
+void checkDoubleTap()
+{
+  unsigned long currentTime = millis();
+  if (currentTime - lastTouchTime < 300)  // 300ms threshold for double-tap
+  {
+    doubleTapDetected = true;
+    lastTouchTime = 0;  // Reset to prevent triple-tap
+  }
+  else
+  {
+    lastTouchTime = currentTime;
+    doubleTapDetected = false;
+  }
+}
+
+void readButton()
+{
+  buttonState = digitalRead(BUTTON_PIN);
+  if (buttonState == LOW && lastButtonState == HIGH)
+  {
+    // Button pressed (falling edge)
+    callMute();
+  }
+  lastButtonState = buttonState;
+}
+
 void loop()
 {
   readEncoder();
+  readButton();
+  
   if (read_touch(&xt, &yt) == 1)
   {
     if(deb==0)
     {
       deb=1;
-      if(xt<200 && yt<100)
-      setColor();
-      if(xt<200 && yt>100)
-      callMute();
-      if(xt>200)
-      resetVOL();
+      checkDoubleTap();
+      
+      if(doubleTapDetected)
+      {
+        // Double-tap detected - reset volume to 12%
+        resetVOL();
+        doubleTapDetected = false;
+      }
+      else if(xt<200 && yt<100)
+      {
+        setColor();
+      }
+      else if(xt<200 && yt>100)
+      {
+        // Single tap on left side - change color
+        setColor();
+      }
+      else if(xt>200)
+      {
+        setColor();
+      }
     }
   }else{deb=0;}
 
@@ -237,6 +289,4 @@ void loop()
    first=0;
   }
 }
-
-
 
